@@ -1,0 +1,6 @@
+.databricks/
+.firecrawl/
+*.log
+.env
+.env.*
+!.env.example

@@ -1,0 +1,23 @@
+resources:
+  jobs:
+    oracle_ingestion_refresh:
+      name: oracle-ingestion-refresh
+      budget_policy_id: ${var.ingestion_budget_policy_id}
+
+      # Query-based pipelines run on a schedule — unlike CDC
+      # pipelines, there's no continuous gateway. Hourly is a
+      # sensible demo default; tune based on how fresh the
+      # destination needs to be.
+      trigger:
+        periodic:
+          interval: 1
+          unit: HOURS
+
+      email_notifications:
+        on_failure:
+          - ${workspace.current_user.userName}
+
+      tasks:
+        - task_key: refresh_pipeline
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.oracle_ingestion.id}

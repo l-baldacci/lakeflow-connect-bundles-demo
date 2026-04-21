@@ -1,0 +1,5 @@
+.databricks/
+*.log
+.env
+.env.*
+!.env.example

@@ -1,0 +1,72 @@
+bundle:
+  name: lakeflow-oracle-ingestion
+
+# ------------------------------------------------------------
+# Variables
+# ------------------------------------------------------------
+# Unlike the SQL Server CDC bundle, Oracle uses *query-based*
+# ingestion (cursor column, not CDC/binlog). Consequences:
+#   - No gateway pipeline
+#   - No custom cluster policy (the "API only" requirement does
+#     not apply to query-based connectors)
+#   - No staging volume
+#   - Runs on a schedule, not continuously
+variables:
+  oracle_foreign_catalog:
+    description: >-
+      Name of the existing UC foreign catalog that federates the Oracle source.
+      We ingest *from* this catalog (no direct Oracle connection needed).
+  source_schema:
+    description: Oracle schema / user name (case as shown in UC — lowercased for federation).
+  source_table:
+    description: Oracle table to ingest.
+  cursor_column:
+    description: >-
+      Monotonically increasing column (timestamp or integer) used as the
+      high-water mark between runs. Required for query-based ingestion.
+  primary_key:
+    description: Primary-key column used to dedupe / upsert on each run.
+  dest_catalog:
+    description: Destination Unity Catalog catalog.
+  dest_schema:
+    description: Destination Unity Catalog schema.
+  pipeline_name:
+    description: Friendly name of the ingestion pipeline.
+    default: oracle-ingestion-pipeline
+  ingestion_budget_policy_id:
+    description: >-
+      Serverless budget policy UUID applied to the ingestion pipeline +
+      refresh job for cost attribution. Leave empty to skip.
+    default: ""
+
+# ------------------------------------------------------------
+# Presets — tags applied to every tag-capable resource
+# ------------------------------------------------------------
+presets:
+  tags:
+    project: lakeflow_connect_demo
+
+# ------------------------------------------------------------
+# Resource definitions
+# ------------------------------------------------------------
+include:
+  - resources/*.yml
+
+# ------------------------------------------------------------
+# Deployment targets
+# ------------------------------------------------------------
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://e2-demo-field-eng.cloud.databricks.com
+      profile: e2-demo-west
+
+  prod:
+    mode: production
+    workspace:
+      host: https://e2-demo-field-eng.cloud.databricks.com
+      profile: e2-demo-west
+    run_as:
+      service_principal_name: <service-principal-application-id>

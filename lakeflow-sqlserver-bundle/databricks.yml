@@ -1,0 +1,82 @@
+bundle:
+  name: lakeflow-sqlserver-ingestion
+
+# ------------------------------------------------------------
+# Variables
+# ------------------------------------------------------------
+# `policy_id` uses `lookup` so the bundle resolves the ID by name
+# automatically — no need to copy-paste the ID after running the
+# manage_policy.sh script. If the policy does not yet exist the
+# first deploy will fail with a clear error; run the `create_policy`
+# script first, then re-deploy.
+variables:
+  sqlserver_connection_name:
+    description: Name of the existing Unity Catalog connection to SQL Server.
+  source_catalog:
+    description: SQL Server source catalog (database) name — match source case exactly.
+  source_schema:
+    description: SQL Server source schema — match source case exactly.
+  source_table:
+    description: SQL Server table to ingest for the demo.
+  dest_catalog:
+    description: Destination Unity Catalog catalog.
+  dest_schema:
+    description: Destination Unity Catalog schema (also used for staging volume).
+  gateway_name:
+    description: Friendly name of the ingestion gateway pipeline.
+    default: sqlserver-gateway
+  pipeline_name:
+    description: Friendly name of the ingestion pipeline.
+    default: sqlserver-ingestion-pipeline
+  policy_id:
+    description: >-
+      ID of the custom cluster policy applied to the gateway.
+      Pre-created via scripts/manage_policy.sh; hard-coded here because
+      the policy is treated as a workspace input — it outlives any single
+      bundle deploy.
+    default: "001CD23AAEF62DCB"
+  ingestion_budget_policy_id:
+    description: >-
+      Serverless budget policy UUID applied to the ingestion pipeline for
+      cost attribution. Account-level resource — grab the ID from
+      Admin Settings → Budget Policies. Leave empty to skip.
+    default: ""
+
+# ------------------------------------------------------------
+# Presets (apply to all resources across all targets)
+# ------------------------------------------------------------
+# `tags` is merged into every resource that supports tagging
+# (jobs, pipelines, clusters). Used here for cost attribution
+# and demo lineage.
+presets:
+  tags:
+    project: lakeflow_connect_demo
+
+# ------------------------------------------------------------
+# Resource definitions
+# ------------------------------------------------------------
+# NOTE: DABs do not support `cluster_policies` as a first-class
+# resource, so the policy is managed out-of-band via the script
+# at scripts/manage_policy.sh. Run it once (per workspace) before
+# the first `bundle deploy` — see README Step 1.
+include:
+  - resources/*.yml
+
+# ------------------------------------------------------------
+# Deployment targets
+# ------------------------------------------------------------
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://e2-demo-field-eng.cloud.databricks.com
+      profile: e2-demo-west
+
+  prod:
+    mode: production
+    workspace:
+      host: https://e2-demo-field-eng.cloud.databricks.com
+      profile: e2-demo-west
+    run_as:
+      service_principal_name: <service-principal-application-id>

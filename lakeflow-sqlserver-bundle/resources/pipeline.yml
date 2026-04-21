@@ -1,0 +1,42 @@
+resources:
+  pipelines:
+    # --------------------------------------------------------
+    # Ingestion gateway — extracts CDC/snapshot data from SQL
+    # Server and stages it in a Unity Catalog volume. Runs as a
+    # continuous pipeline on a classic cluster, which is why it
+    # requires the custom policy (cluster_type=dlt, API only).
+    # --------------------------------------------------------
+    gateway:
+      name: ${var.gateway_name}
+      gateway_definition:
+        connection_name: ${var.sqlserver_connection_name}
+        gateway_storage_catalog: ${var.dest_catalog}
+        gateway_storage_schema: ${var.dest_schema}
+        gateway_storage_name: ${var.gateway_name}
+      catalog: ${var.dest_catalog}
+      schema: ${var.dest_schema}
+      # Apply the custom cluster policy to the gateway's cluster.
+      # The `default` label is the one DLT uses for gateway compute.
+      clusters:
+        - label: default
+          policy_id: ${var.policy_id}
+
+    # --------------------------------------------------------
+    # Ingestion pipeline — reads staged CDC data from the
+    # gateway's UC volume and MERGEs into destination streaming
+    # tables. Runs on serverless by default; no policy required.
+    # --------------------------------------------------------
+    sqlserver_ingestion:
+      name: ${var.pipeline_name}
+      budget_policy_id: ${var.ingestion_budget_policy_id}
+      ingestion_definition:
+        ingestion_gateway_id: ${resources.pipelines.gateway.id}
+        objects:
+          - table:
+              source_catalog: ${var.source_catalog}
+              source_schema: ${var.source_schema}
+              source_table: ${var.source_table}
+              destination_catalog: ${var.dest_catalog}
+              destination_schema: ${var.dest_schema}
+      catalog: ${var.dest_catalog}
+      schema: ${var.dest_schema}

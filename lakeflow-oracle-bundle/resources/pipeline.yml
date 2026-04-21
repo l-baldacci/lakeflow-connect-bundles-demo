@@ -1,0 +1,33 @@
+resources:
+  pipelines:
+    # --------------------------------------------------------
+    # Query-based ingestion pipeline — no gateway, no staging
+    # volume. Runs against the UC foreign catalog that already
+    # federates the Oracle source, using `cursor_column` as the
+    # high-water mark to pull only new/updated rows per run.
+    # --------------------------------------------------------
+    oracle_ingestion:
+      name: ${var.pipeline_name}
+      budget_policy_id: ${var.ingestion_budget_policy_id}
+      ingestion_definition:
+        # Ingest from an existing Lakehouse Federation catalog
+        # rather than a direct connection. Simpler and supports
+        # deletion tracking via `deletion_condition`.
+        ingest_from_uc_foreign_catalog: true
+        objects:
+          - table:
+              source_catalog: ${var.oracle_foreign_catalog}
+              source_schema: ${var.source_schema}
+              source_table: ${var.source_table}
+              # cursor_columns is what makes this a query-based
+              # (vs. snapshot) ingestion — only rows where the
+              # cursor value exceeds the last run's high-water
+              # mark are pulled.
+              cursor_columns:
+                - ${var.cursor_column}
+              primary_keys:
+                - ${var.primary_key}
+              destination_catalog: ${var.dest_catalog}
+              destination_schema: ${var.dest_schema}
+      catalog: ${var.dest_catalog}
+      schema: ${var.dest_schema}

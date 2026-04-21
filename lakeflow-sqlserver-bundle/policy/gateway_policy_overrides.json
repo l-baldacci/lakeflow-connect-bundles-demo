@@ -1,0 +1,28 @@
+{
+  "cluster_type": {
+    "type": "fixed",
+    "value": "dlt"
+  },
+  "num_workers": {
+    "type": "unlimited",
+    "defaultValue": 1,
+    "isOptional": true
+  },
+  "runtime_engine": {
+    "type": "fixed",
+    "value": "STANDARD",
+    "hidden": true
+  },
+  "driver_node_type_id": {
+    "type": "fixed",
+    "value": "r5n.16xlarge"
+  },
+  "node_type_id": {
+    "type": "fixed",
+    "value": "m5n.large"
+  },
+  "custom_tags.project": {
+    "type": "fixed",
+    "value": "lakeflow_connect_demo"
+  }
+}
