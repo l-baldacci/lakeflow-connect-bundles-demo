@@ -35,7 +35,6 @@ significantly simpler: one pipeline, one job, no policy management script.
 │   ├── pipeline.yml      # Query-based ingestion pipeline
 │   └── job.yml           # Hourly refresh job
 ├── .env.example          # Template for bundle variables
-├── .env                  # Working config for e2-demo-field-eng
 └── .gitignore
 ```
 

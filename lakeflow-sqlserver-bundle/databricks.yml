@@ -31,10 +31,10 @@ variables:
   policy_id:
     description: >-
       ID of the custom cluster policy applied to the gateway.
-      Pre-created via scripts/manage_policy.sh; hard-coded here because
-      the policy is treated as a workspace input — it outlives any single
-      bundle deploy.
-    default: "001CD23AAEF62DCB"
+      Pre-created via scripts/manage_policy.sh — run it once per workspace
+      and paste the returned ID here, or override via
+      BUNDLE_VAR_policy_id in .env.
+    default: "<policy-id-from-manage-policy-script>"
   ingestion_budget_policy_id:
     description: >-
       Serverless budget policy UUID applied to the ingestion pipeline for
@@ -70,13 +70,13 @@ targets:
     mode: development
     default: true
     workspace:
-      host: https://e2-demo-field-eng.cloud.databricks.com
-      profile: e2-demo-west
+      host: https://<your-workspace>.cloud.databricks.com
+      profile: <your-databricks-cli-profile>
 
   prod:
     mode: production
     workspace:
-      host: https://e2-demo-field-eng.cloud.databricks.com
-      profile: e2-demo-west
+      host: https://<your-workspace>.cloud.databricks.com
+      profile: <your-databricks-cli-profile>
     run_as:
       service_principal_name: <service-principal-application-id>

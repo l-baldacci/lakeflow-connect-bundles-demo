@@ -60,13 +60,13 @@ targets:
     mode: development
     default: true
     workspace:
-      host: https://e2-demo-field-eng.cloud.databricks.com
-      profile: e2-demo-west
+      host: https://<your-workspace>.cloud.databricks.com
+      profile: <your-databricks-cli-profile>
 
   prod:
     mode: production
     workspace:
-      host: https://e2-demo-field-eng.cloud.databricks.com
-      profile: e2-demo-west
+      host: https://<your-workspace>.cloud.databricks.com
+      profile: <your-databricks-cli-profile>
     run_as:
       service_principal_name: <service-principal-application-id>
