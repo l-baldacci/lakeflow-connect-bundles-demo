@@ -3,7 +3,7 @@
 A minimal Databricks Asset Bundle (DAB) that ingests from an Oracle database
 into Unity Catalog using **Lakeflow Connect's query-based connector**.
 
-Companion to [`lakeflow-sqlserver-bundle`](../lakeflow-sqlserver-bundle) — same
+Companion to [`lakeflow-sqlserver-cdc`](../lakeflow-sqlserver-cdc) — same
 pattern, but with one crucial architectural difference.
 
 ---

@@ -6,8 +6,8 @@ side by side.
 
 | Bundle | Source type | Connector model | Complexity |
 |---|---|---|---|
-| [`lakeflow-sqlserver-bundle`](./lakeflow-sqlserver-bundle) | SQL Server | **CDC** (change data capture) via ingestion gateway | Higher — requires a custom cluster policy (API only) |
-| [`lakeflow-oracle-bundle`](./lakeflow-oracle-bundle) | Oracle | **Query-based** (cursor column) | Lower — no gateway, no custom policy |
+| [`lakeflow-sqlserver-cdc`](./lakeflow-sqlserver-cdc) | SQL Server | **CDC** (change data capture) via ingestion gateway | Higher — requires a custom cluster policy (API only) |
+| [`lakeflow-oracle-qbc-serverless`](./lakeflow-oracle-qbc-serverless) | Oracle | **Query-based** (cursor column) | Lower — no gateway, no custom policy |
 
 ## Why two bundles?
 
@@ -44,7 +44,7 @@ SQL Server only:
 ## Quick start (either bundle)
 
 ```bash
-cd lakeflow-sqlserver-bundle   # or lakeflow-oracle-bundle
+cd lakeflow-sqlserver-cdc   # or lakeflow-oracle-qbc-serverless
 cp .env.example .env
 # edit .env
 source .env
