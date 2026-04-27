@@ -26,6 +26,7 @@ resources:
           num_workers: 0
           spark_conf:
             "spark.databricks.cluster.profile": "singleNode"
+            "spark.master": "local[*]"
           custom_tags:
             "ResourceClass": "SingleNode"
 

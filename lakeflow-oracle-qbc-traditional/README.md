@@ -18,14 +18,35 @@ Per the [query-based connectors overview](https://docs.databricks.com/aws/en/ing
 > Databricks recommends using serverless compute.
 
 "API only" means the workspace UI has no toggle to put a query-based
-ingestion pipeline on classic compute — but the Pipelines REST API
-accepts the configuration, and a DAB is a thin YAML layer over that
-API. So expressing it in `pipeline.yml` is the supported path.
+ingestion pipeline on classic compute. The **Pipelines REST API does
+accept the configuration** (we verified by direct POST against
+`e2-demo-field-eng`, pipeline `b60e2695-9eaf-42d0-bdcc-5b55ecad9aa4`),
+but two integration gaps mean a DAB-driven deploy is not yet end-to-end:
+
+1. **Terraform provider client-side validation** rejects the
+   `serverless: false` + `clusters` + `ingestion_definition`
+   combination with `"You cannot provide cluster settings when using
+   serverless compute"`, even though the rendered request body in
+   `bundle.tf.json` correctly sets `serverless: false`. The provider's
+   schema validation hasn't caught up to the API. Workaround: deploy
+   the pipeline by direct API call until the
+   [databricks/databricks](https://github.com/databricks/terraform-provider-databricks)
+   provider ships an updated schema for ingestion-pipeline cluster
+   blocks.
+2. **Runtime Foreign Catalog API** — the pipeline cluster boots fine
+   (~8 min cold start) and Lakeflow Connect's analysis stage starts,
+   but `GET_TABLE_SCHEMA` calls against the source foreign catalog
+   fail with
+   `[QUERY_BASED_CONNECTOR_SOURCE_API_ERROR]`. The same source table
+   resolves cleanly through `DESCRIBE` on a SQL warehouse — the runtime
+   uses a separate code path that may not yet be wired up alongside
+   classic compute.
 
 **Use this bundle only if** the serverless compute network can't reach
 your Oracle source (private VPC, instance-profile auth, on-prem behind
-peering, etc.). Otherwise prefer the serverless variant — fewer moving
-parts, faster cold start, and no Beta caveat.
+peering, etc.) **and** you've confirmed the two gaps above are
+resolved in your workspace. Otherwise prefer the serverless variant —
+fewer moving parts, faster cold start, and no Beta caveat.
 
 ---
 
