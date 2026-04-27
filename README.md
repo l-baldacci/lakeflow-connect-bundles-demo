@@ -1,15 +1,17 @@
 # Lakeflow Connect — bundle demos
 
-Two companion Databricks Asset Bundle (DAB) examples showing **two different
-ingestion patterns** available in [Lakeflow Connect](https://docs.databricks.com/aws/en/ingestion/lakeflow-connect/),
+Companion Databricks Asset Bundle (DAB) examples showing different
+ingestion patterns and compute modes available in
+[Lakeflow Connect](https://docs.databricks.com/aws/en/ingestion/lakeflow-connect/),
 side by side.
 
-| Bundle | Source type | Connector model | Complexity |
-|---|---|---|---|
-| [`lakeflow-sqlserver-cdc`](./lakeflow-sqlserver-cdc) | SQL Server | **CDC** (change data capture) via ingestion gateway | Higher — requires a custom cluster policy (API only) |
-| [`lakeflow-oracle-qbc-serverless`](./lakeflow-oracle-qbc-serverless) | Oracle | **Query-based** (cursor column) | Lower — no gateway, no custom policy |
+| Bundle | Source | Connector model | Compute | Notes |
+|---|---|---|---|---|
+| [`lakeflow-sqlserver-cdc`](./lakeflow-sqlserver-cdc) | SQL Server | **CDC** via ingestion gateway | Classic (gateway) + serverless (ingestion) | Requires a custom cluster policy (API only) |
+| [`lakeflow-oracle-qbc-serverless`](./lakeflow-oracle-qbc-serverless) | Oracle | **Query-based** (cursor column) | Serverless | Default / recommended path |
+| [`lakeflow-oracle-qbc-traditional`](./lakeflow-oracle-qbc-traditional) | Oracle | **Query-based** (cursor column) | Classic single-node | **Beta** — opt-in for private-network reachability |
 
-## Why two bundles?
+## Why these bundles?
 
 The SQL Server example walks through the **"(API only) custom policy"**
 requirement from the [SQL Server pipeline docs](https://docs.databricks.com/aws/en/ingestion/lakeflow-connect/sql-server-pipeline#requirements)
@@ -18,13 +20,20 @@ requirement from the [SQL Server pipeline docs](https://docs.databricks.com/aws/
 this policy via the Cluster Policies REST API and a version-controlled JSON
 of the required overrides.
 
-The Oracle example intentionally contrasts that complexity. Oracle uses the
+The Oracle examples intentionally contrast that complexity. Oracle uses the
 **query-based** connector, which does not require a gateway, staging volume,
-or custom cluster policy — only a cursor column on the source table.
+or custom cluster policy — only a cursor column on the source table. The
+two Oracle bundles share an identical `ingestion_definition` and differ only
+in compute mode:
 
-Together the two bundles illustrate the architectural trade-off you make per
-source: continuous CDC capture (lower source load, richer event stream) vs.
-scheduled query-based (higher source load, simpler operation).
+- **`-serverless`** — the default, recommended path. No `clusters:` block.
+- **`-traditional`** — `serverless: false` plus an explicit single-node
+  `clusters:` block. Beta + API-only per the docs; useful when serverless
+  networking can't reach the source.
+
+Together the bundles illustrate two orthogonal trade-offs: connector model
+(continuous CDC vs. scheduled query-based) and compute mode (serverless vs.
+classic).
 
 ## Contents per bundle
 
@@ -41,10 +50,12 @@ SQL Server only:
 - `policy/gateway_policy_overrides.json` — the policy-family override payload
 - `scripts/manage_policy.sh` — idempotent create-or-update via REST API
 
-## Quick start (either bundle)
+## Quick start (any bundle)
 
 ```bash
-cd lakeflow-sqlserver-cdc   # or lakeflow-oracle-qbc-serverless
+cd lakeflow-sqlserver-cdc \
+  # or lakeflow-oracle-qbc-serverless \
+  # or lakeflow-oracle-qbc-traditional
 cp .env.example .env
 # edit .env
 source .env
@@ -57,13 +68,16 @@ setup steps.
 
 ## Shared conventions
 
-Both bundles share:
+All bundles share:
 
 - **`presets.tags.project: lakeflow_connect_demo`** — propagates to every
   tag-capable resource for cost attribution in `system.billing.usage`.
-- **`budget_policy_id`** variable on the ingestion pipeline and the refresh
-  job for serverless cost attribution (pick your workspace's
-  Budget Policy / Serverless Usage Policy UUID).
 - **`mode: development`** on the `dev` target — prefixes all resource names
   with `[dev <username>]` so multiple SAs can share a workspace without
   collisions.
+
+Serverless variants additionally use a **`budget_policy_id`** variable on
+the ingestion pipeline and the refresh job for serverless cost attribution
+(pick your workspace's Budget Policy / Serverless Usage Policy UUID). The
+`-traditional` Oracle variant skips this — budget policies attribute
+serverless DBUs only.

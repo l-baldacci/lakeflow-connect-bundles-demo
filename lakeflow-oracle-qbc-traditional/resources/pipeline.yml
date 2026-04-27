@@ -1,0 +1,53 @@
+resources:
+  pipelines:
+    # --------------------------------------------------------
+    # Query-based ingestion pipeline on **classic compute**.
+    # Same ingestion shape as the serverless variant, but with
+    # `serverless: false` + an explicit `clusters:` block.
+    #
+    # Per the Lakeflow Connect docs, classic compute for
+    # query-based connectors is in Beta and API-only — DABs
+    # deploy via the Pipelines REST API, so this YAML is the
+    # supported path.
+    # --------------------------------------------------------
+    oracle_ingestion:
+      name: ${var.pipeline_name}
+
+      # Opt out of serverless. Required for classic compute on
+      # query-based connectors (the API default is serverless).
+      serverless: false
+
+      # Single-node cluster — driver only, no workers. Good for
+      # a demo / functional test of small tables. For production,
+      # swap `num_workers: 0` for an `autoscale:` block.
+      clusters:
+        - label: default
+          node_type_id: ${var.node_type_id}
+          num_workers: 0
+          spark_conf:
+            "spark.databricks.cluster.profile": "singleNode"
+          custom_tags:
+            "ResourceClass": "SingleNode"
+
+      ingestion_definition:
+        # Ingest from an existing Lakehouse Federation catalog
+        # rather than a direct connection. Simpler and supports
+        # deletion tracking via `deletion_condition`.
+        ingest_from_uc_foreign_catalog: true
+        objects:
+          - table:
+              source_catalog: ${var.oracle_foreign_catalog}
+              source_schema: ${var.source_schema}
+              source_table: ${var.source_table}
+              # cursor_columns is what makes this a query-based
+              # (vs. snapshot) ingestion — only rows where the
+              # cursor value exceeds the last run's high-water
+              # mark are pulled.
+              cursor_columns:
+                - ${var.cursor_column}
+              primary_keys:
+                - ${var.primary_key}
+              destination_catalog: ${var.dest_catalog}
+              destination_schema: ${var.dest_schema}
+      catalog: ${var.dest_catalog}
+      schema: ${var.dest_schema}

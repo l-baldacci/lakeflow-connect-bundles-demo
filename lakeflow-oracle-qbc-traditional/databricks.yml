@@ -1,0 +1,76 @@
+bundle:
+  name: lakeflow-oracle-ingestion-traditional
+
+# ------------------------------------------------------------
+# Variables
+# ------------------------------------------------------------
+# Same query-based connector as `lakeflow-oracle-qbc-serverless`,
+# but pinned to *classic compute* instead of serverless. Per the
+# Lakeflow Connect docs, classic compute for query-based connectors
+# is currently in **Beta** and configurable only through the API
+# (no workspace UI toggle) — which is exactly what a Databricks
+# Asset Bundle delivers, since DABs deploy via the Pipelines API.
+#
+# Use this variant only when serverless cannot reach the source
+# (e.g. private network / VPC-peered Oracle, instance-profile
+# auth). Otherwise prefer the serverless bundle.
+variables:
+  oracle_foreign_catalog:
+    description: >-
+      Name of the existing UC foreign catalog that federates the Oracle source.
+      We ingest *from* this catalog (no direct Oracle connection needed).
+  source_schema:
+    description: Oracle schema / user name (case as shown in UC — lowercased for federation).
+  source_table:
+    description: Oracle table to ingest.
+  cursor_column:
+    description: >-
+      Monotonically increasing column (timestamp or integer) used as the
+      high-water mark between runs. Required for query-based ingestion.
+  primary_key:
+    description: Primary-key column used to dedupe / upsert on each run.
+  dest_catalog:
+    description: Destination Unity Catalog catalog.
+  dest_schema:
+    description: Destination Unity Catalog schema.
+  pipeline_name:
+    description: Friendly name of the ingestion pipeline.
+    default: oracle-ingestion-pipeline-traditional
+  node_type_id:
+    description: >-
+      EC2 instance type for the single-node pipeline cluster. Defaults to a
+      small Graviton instance suitable for demo / test workloads. For
+      production, swap to autoscaling in `resources/pipeline.yml`.
+    default: m6gd.large
+
+# ------------------------------------------------------------
+# Presets — tags applied to every tag-capable resource
+# ------------------------------------------------------------
+presets:
+  tags:
+    project: lakeflow_connect_demo
+
+# ------------------------------------------------------------
+# Resource definitions
+# ------------------------------------------------------------
+include:
+  - resources/*.yml
+
+# ------------------------------------------------------------
+# Deployment targets
+# ------------------------------------------------------------
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://<your-workspace>.cloud.databricks.com
+      profile: <your-databricks-cli-profile>
+
+  prod:
+    mode: production
+    workspace:
+      host: https://<your-workspace>.cloud.databricks.com
+      profile: <your-databricks-cli-profile>
+    run_as:
+      service_principal_name: <service-principal-application-id>
